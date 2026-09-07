@@ -1,0 +1,39 @@
+name: Generate blog articles manifest
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: sudo apt update && sudo apt install -y jq
+
+      - run: chmod +x generate-manifest.sh
+
+      - run: ./generate-manifest.sh
+
+      - name: Commit updated manifest
+        run: |
+          git config user.name "github-actions"
+          git config user.email "<>"
+
+          git fetch origin
+
+          git switch release || git switch -c release
+          git reset --hard main
+
+          git add manifest.json
+
+          git diff --cached --quiet || git commit -m "Update manifest"
+
+          git push --force-with-lease origin release
